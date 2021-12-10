@@ -1,89 +1,107 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
 namespace Microwave.Core.Engine
 {
     public class Genome
     {
-        public static Random random;
-
-        public const int GenomeLength = 64;
-
-        private int index;
-        private int[] genome;
-
+        GenomeContainer genome;
+        
         public Genome()
         {
-            index = 0;
-            genome = new int[GenomeLength];
+            genome = new GenomeContainer();
         }
 
-        static Genome()
+        public void OffsetGenome(int i)
         {
-            random = new Random();
+            genome.Offset(i);
         }
 
-        public void EcexuteCommand(Cell cell)
+        public CommandContainer ReturnCommand()
         {
-            var command = (GenomeStates)genome[index];
+            CommandContainer container = new CommandContainer();
 
-            switch (command)
+            int mainCommandIndex = genome.CurrentIndex;
+            int notConvertCommant = genome.GetInt();
+
+            container.command = GenomeContainer.IntToGenomeState(notConvertCommant);
+
+            List<int> states = new List<int>(5);
+
+            switch (container.command)
             {
-                case GenomeStates.currentEnergy:
+                case GenomeStates.none:
+                    container.argument = notConvertCommant;
                     break;
-                case GenomeStates.currentEnergyIncome:
-                    break;
-                case GenomeStates.currentWater:
-                    break;
-                case GenomeStates.currentWaterIncome:
-                    break;
-                case GenomeStates.worldPosition:
-                    break;
-                case GenomeStates.haveConnections:
-                    break;
-                case GenomeStates.photosynthesis:
-                    break;
-                case GenomeStates.eatAnything:
-                    break;
-                case GenomeStates.sendEnergy:
-                    break;
-                case GenomeStates.look:
-                    //int output = cell.LookAt(genome[index + 1] % 8);
-                    break;
-                case GenomeStates.go:
-                    //int output = cell.GoTo(genome[index + 1] % 8);
-                    break;
-                default:
-                    index += (int)command;
 
-                    if (index >= GenomeLength) 
-                        index -= GenomeLength;
+                case GenomeStates.currentEnergy:
+                case GenomeStates.currentEnergyIncome:
+                case GenomeStates.currentWater:
+                case GenomeStates.currentWaterIncome:
+                case GenomeStates.verticalPosition:
+                case GenomeStates.haveConnections:
+                    container.argument = genome.GetInt();
+
+                    for (int i = 0; i < 2; i++)
+                        states.Add(genome.GetInt());
+                    break;
+
+                case GenomeStates.look:
+                case GenomeStates.turn:
+                case GenomeStates.go:
+                case GenomeStates.eatAnything:
+                    container.argument = genome.GetInt();
+
+                    for (int i = 0; i < 5; i++)
+                        states.Add(genome.GetInt());
+                    break;
+
+                case GenomeStates.sendEnergy:
+                case GenomeStates.photosynthesis:
                     break;
             }
 
+            for (int i = 0; i < states.Count; i++)
+            {
+                states[i] += mainCommandIndex - genome.CurrentIndex;
+            }
+
+            container.genomeArguments = states.ToArray();
+
+            return container;
         }
+
+    }
+
+    public struct CommandContainer
+    {
+        public GenomeStates command;
+        
+        public int argument;
+
+        public int[] genomeArguments;
     }
 
     public enum GenomeStates
     {
+        none,
+
+        // mind commands
         currentEnergy,
-        currentEnergyIncome,
+        currentEnergyIncome, 
         
-        currentWater,
-        currentWaterIncome,
+        currentWater, 
+        currentWaterIncome, 
+
+        verticalPosition, 
+        haveConnections, 
         
-        worldPosition,
-        haveConnections,
-
-        photosynthesis,
-        eatAnything,
-        sendEnergy,
-
         look,
         turn,
+
+        // work commands
+        photosynthesis, 
+        eatAnything,
+        sendEnergy,
         go
     }
 }

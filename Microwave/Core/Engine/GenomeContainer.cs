@@ -8,12 +8,12 @@ namespace Microwave.Core.Engine
 {
     internal class GenomeContainer
     {
-        public const int GenomeLength = 64;
-        public const int MaxGenomeValue = 64;
+        public const int GenomeLength   = 64;
+        public const int MaxGenomeGeneratedValue = 64;
         public const int incrementSpeed = 10;
 
         public int CurrentLength { get { return GenomeLength; } }
-        public int CurrentIndex { get { return index; } }
+        public int CurrentIndex  { get { return index; } }
 
         private int index;
         private int[] genome;
@@ -51,7 +51,7 @@ namespace Microwave.Core.Engine
                 errorInCreation = 0;
 
                 int pos   = random.Next(GenomeLength);
-                int value = random.Next(MaxGenomeValue);
+                int value = random.Next(MaxGenomeGeneratedValue);
 
                 genome[pos] = value;
             }
@@ -60,7 +60,6 @@ namespace Microwave.Core.Engine
                 errorInCreation += incrementSpeed;
             }
         }
-
 
         public GenomeStates GetCommand()
         {

@@ -26,6 +26,11 @@ namespace Microwave.Core.Engine
             genome.Offset(i);
         }
 
+        public void Mutate()
+        {
+            genome.Mutate();
+        }
+
         public CommandContainer ReturnCommand()
         {
             CommandContainer container = new CommandContainer();
@@ -39,7 +44,6 @@ namespace Microwave.Core.Engine
 
             switch (container.command)
             {
-                case GenomeStates.haveConnections:
                 case GenomeStates.none:
                     container.argument = notConvertCommant;
                     break;
@@ -48,7 +52,6 @@ namespace Microwave.Core.Engine
                 case GenomeStates.currentEnergyIncome:
                 case GenomeStates.currentWater:
                 case GenomeStates.currentWaterIncome:
-                case GenomeStates.verticalPosition:
                     container.argument = genome.GetInt();
 
                     for (int i = 0; i < 2; i++)
@@ -60,7 +63,7 @@ namespace Microwave.Core.Engine
                 case GenomeStates.eatAnything:
                     container.argument = genome.GetInt();
 
-                    for (int i = 0; i < 5; i++)
+                    for (int i = 0; i < 4; i++)
                         states.Add(genome.GetInt());
                     break;
                 case GenomeStates.mutate:
@@ -78,7 +81,6 @@ namespace Microwave.Core.Engine
 
             return container;
         }
-
     }
 
     public struct CommandContainer
@@ -101,9 +103,6 @@ namespace Microwave.Core.Engine
         currentWater, 
         currentWaterIncome, 
 
-        verticalPosition, 
-        haveConnections, // nc
-        
         look,
 
         // work commands

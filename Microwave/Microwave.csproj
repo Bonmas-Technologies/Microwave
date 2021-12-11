@@ -44,8 +44,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Core\Engine\Cell.cs" />
+    <Compile Include="Core\Engine\Coord.cs" />
     <Compile Include="Core\Engine\Genome.cs" />
     <Compile Include="Core\Engine\GenomeContainer.cs" />
+    <Compile Include="Core\Engine\World.cs" />
     <Compile Include="Core\Render\Renderer.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

@@ -2,13 +2,23 @@
 
 namespace Microwave.Core.Engine
 {
-    public class Genome
+    internal class Genome
     {
         GenomeContainer genome;
         
         public Genome()
         {
             genome = new GenomeContainer();
+        }
+
+        public Genome(GenomeContainer other)
+        {
+            genome = other;
+        }
+
+        public GenomeContainer GetContainer()
+        {
+            return new GenomeContainer(genome);
         }
 
         public void OffsetGenome(int i)
@@ -29,6 +39,7 @@ namespace Microwave.Core.Engine
 
             switch (container.command)
             {
+                case GenomeStates.haveConnections:
                 case GenomeStates.none:
                     container.argument = notConvertCommant;
                     break;
@@ -38,7 +49,6 @@ namespace Microwave.Core.Engine
                 case GenomeStates.currentWater:
                 case GenomeStates.currentWaterIncome:
                 case GenomeStates.verticalPosition:
-                case GenomeStates.haveConnections:
                     container.argument = genome.GetInt();
 
                     for (int i = 0; i < 2; i++)
@@ -46,7 +56,6 @@ namespace Microwave.Core.Engine
                     break;
 
                 case GenomeStates.look:
-                case GenomeStates.turn:
                 case GenomeStates.go:
                 case GenomeStates.eatAnything:
                     container.argument = genome.GetInt();
@@ -54,7 +63,7 @@ namespace Microwave.Core.Engine
                     for (int i = 0; i < 5; i++)
                         states.Add(genome.GetInt());
                     break;
-
+                case GenomeStates.mutate:
                 case GenomeStates.sendEnergy:
                 case GenomeStates.photosynthesis:
                     break;
@@ -93,12 +102,12 @@ namespace Microwave.Core.Engine
         currentWaterIncome, 
 
         verticalPosition, 
-        haveConnections, 
+        haveConnections, // nc
         
         look,
-        turn,
 
         // work commands
+        mutate,
         photosynthesis, 
         eatAnything,
         sendEnergy,

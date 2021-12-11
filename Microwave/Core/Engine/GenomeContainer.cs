@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Microwave.Core.Engine
 {
@@ -49,16 +45,21 @@ namespace Microwave.Core.Engine
             if ((errorInCreation / 100f) > random.NextDouble())
             {
                 errorInCreation = 0;
-
-                int pos   = random.Next(GenomeLength);
-                int value = random.Next(MaxGenomeGeneratedValue);
-
-                genome[pos] = value;
+                
+                Mutate();
             }
             else
             {
                 errorInCreation += incrementSpeed;
             }
+        }
+
+        public void Mutate()
+        {
+            int pos = random.Next(GenomeLength);
+            int value = random.Next(MaxGenomeGeneratedValue);
+
+            genome[pos] = value;
         }
 
         public GenomeStates GetCommand()

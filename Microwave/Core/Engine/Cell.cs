@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace Microwave.Core.Engine
 {
@@ -6,7 +7,7 @@ namespace Microwave.Core.Engine
     {
         public const int maxValue    = 945;
         public const int multiplier  = 15;
-        public const int maxLiveTime = 128;
+        public const int maxLiveTime = 945;
 
         public Coord curCoord;
 
@@ -14,10 +15,11 @@ namespace Microwave.Core.Engine
         public Action<Cell> KillCell;
         
         private int energy   = maxValue / 2;
-        private int water    = maxValue;
+        private int minerals = 0;
         private int livetime = 0;
         
         private Genome genome;
+        private static Random random = new Random();
 
         public Cell(Coord coord, Action<Cell> createCell, Action<Cell> killCell)
         {
@@ -50,7 +52,7 @@ namespace Microwave.Core.Engine
             var container = genome.ReturnCommand();
 
             int energyIncome = world.GetEnergy(curCoord);
-            int waterIncome = world.GetWater(curCoord);
+            int mineralsIncome = world.GetMinerals(curCoord);
 
             var offset = ArgumentToCoord(container.argument);
 
@@ -70,8 +72,8 @@ namespace Microwave.Core.Engine
                         genome.OffsetGenome(container.genomeArguments[1]);
                     break;
 
-                case GenomeStates.currentWater:
-                    if ((container.argument * multiplier) < water)
+                case GenomeStates.currentMinerals:
+                    if ((container.argument * multiplier) < minerals)
                         genome.OffsetGenome(container.genomeArguments[0]);
                     else
                         genome.OffsetGenome(container.genomeArguments[1]);
@@ -83,8 +85,8 @@ namespace Microwave.Core.Engine
                     else
                         genome.OffsetGenome(container.genomeArguments[1]);
                     break;
-                case GenomeStates.currentWaterIncome:
-                    if (container.argument < waterIncome * multiplier)
+                case GenomeStates.currentMineralsIncome:
+                    if (container.argument < mineralsIncome * multiplier)
                         genome.OffsetGenome(container.genomeArguments[0]);
                     else
                         genome.OffsetGenome(container.genomeArguments[1]);
@@ -93,17 +95,24 @@ namespace Microwave.Core.Engine
                 case GenomeStates.eatAnything:
                     if (block == Blocks.Organics)
                     {
-                        world.EatOrganics(curCoord + offset);
+                        if (world.EatOrganics(curCoord + offset))
+                        {
+                            energy += 10;
+                        }
                     }
                     else if (block == Blocks.Cell)
                     {
-                        world.KillCell(curCoord + offset);
+                        //world.KillCell(curCoord + offset);
                     }
+
+                    genome.OffsetGenome(container.genomeArguments[(int)block]);
                     break;
 
                 case GenomeStates.go:
                     if (block == Blocks.None)
                     {
+                        world.GoTo(curCoord, offset);
+                        
                         curCoord += offset;
                     }
                     genome.OffsetGenome(container.genomeArguments[(int)block]);
@@ -116,39 +125,46 @@ namespace Microwave.Core.Engine
                 case GenomeStates.photosynthesis:
                     energy += energyIncome;
                     break;
+                case GenomeStates.mineralsConvert:
+                    energy += minerals;
+                    minerals = 0;
+                    break;
                 case GenomeStates.mutate:
+                    genome.Mutate();
                     genome.Mutate();
                     break;
             }
 
             if (energy >= maxValue)
             {
-                bool canBeCreated = false;
+
+                List<Coord> WhereCanCreated = new List<Coord>(8);
 
                 for (int i = 0; i < 8; i++)
                 {
                     var coord = ArgumentToCoord(i);
-
-                    canBeCreated = world.GetBlock(coord) == Blocks.None;
+                    
+                    bool canBeCreated = world.GetBlock(coord + curCoord) == Blocks.None;
 
                     if (canBeCreated)
                     {
-                        energy = maxValue / 2;
-
-                        CreateCell?.Invoke(new Cell(coord, this));
-
-                        break;
+                        WhereCanCreated.Add(coord);
                     }
                 }
 
-                if (!canBeCreated)
+                if (WhereCanCreated.Count > 0)
+                {
+                    energy = maxValue / 2;
+
+                    CreateCell?.Invoke(new Cell(WhereCanCreated[random.Next(WhereCanCreated.Count)] + curCoord, this));
+                }
+                else
                 {
                     KillCell?.Invoke(this);
                 }
-
             }
 
-            if (energy <= 0 || water <= 0)
+            if (energy <= 0 || livetime >= maxLiveTime)
             {
                 KillCell?.Invoke(this);
             }
@@ -157,7 +173,7 @@ namespace Microwave.Core.Engine
             livetime++;
             energy--;
 
-            water += waterIncome - 1;
+            minerals += mineralsIncome;
         }
 
         private Coord ArgumentToCoord(int arg)

@@ -48,6 +48,7 @@
     <Compile Include="Core\Engine\Genome.cs" />
     <Compile Include="Core\Engine\GenomeContainer.cs" />
     <Compile Include="Core\Engine\World.cs" />
+    <Compile Include="Core\Render\ConsoleRenderer.cs" />
     <Compile Include="Core\Render\Renderer.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

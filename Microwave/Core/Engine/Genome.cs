@@ -50,8 +50,8 @@ namespace Microwave.Core.Engine
 
                 case GenomeStates.currentEnergy:
                 case GenomeStates.currentEnergyIncome:
-                case GenomeStates.currentWater:
-                case GenomeStates.currentWaterIncome:
+                case GenomeStates.currentMinerals:
+                case GenomeStates.currentMineralsIncome:
                     container.argument = genome.GetInt();
 
                     for (int i = 0; i < 2; i++)
@@ -68,6 +68,7 @@ namespace Microwave.Core.Engine
                     break;
                 case GenomeStates.mutate:
                 case GenomeStates.photosynthesis:
+                case GenomeStates.mineralsConvert:
                     break;
             }
 
@@ -99,14 +100,15 @@ namespace Microwave.Core.Engine
         currentEnergy,
         currentEnergyIncome, 
         
-        currentWater, 
-        currentWaterIncome, 
+        currentMinerals, 
+        currentMineralsIncome, 
 
         look,
 
         // work commands
         mutate,
         photosynthesis, 
+        mineralsConvert, 
         eatAnything,
         go
     }

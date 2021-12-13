@@ -23,21 +23,29 @@ namespace Microwave.Core.Engine
             Width   = width;
             Height  = height;
 
+            if (Width < 16 || Height < 16) throw new ArgumentException("размер мира слишком мал");
+
             map     = new Blocks[width, height];
             cellMap = new Blocks[width, height];
 
             cells   = new List<Cell>(2 << 12)
             {
-                new Cell(new Coord(width / 2, height / 2), OnCellCreate, OnCellKill)
+                new Cell(new Coord(width / 2, Height / 2), OnCellCreate, OnCellKill)
             };
         }
 
         public void Step()
         {
-            Queue<Cell> updatableCells = (Queue<Cell>)new Queue<Cell>().Union(cells);
+            Queue<Cell> updatableCells = new Queue<Cell>();
 
             cellMap = new Blocks[Width, Height];
-            
+
+
+            foreach (Cell cell in cells)
+            {
+                updatableCells.Enqueue(cell);
+            }
+
             foreach (Cell cell in cells)
             {
                 var x = cell.curCoord.X;
@@ -53,17 +61,35 @@ namespace Microwave.Core.Engine
                 cell.Step(this);
             }
 
+            List<Cell> toDelete = new List<Cell>();
 
-            foreach (Cell cell in cells)
+            for (int i = 0; i < cells.Count; i++)
             {
-                var x = cell.curCoord.X;
-                var y = cell.curCoord.Y;
+                var x = cells[i].curCoord.X;
+                var y = cells[i].curCoord.Y;
 
                 if (cellMap[x, y] == Blocks.None)
                 {
-                    cell.Step(this);
+                    toDelete.Add(cells[i]);
                 }
+
             }
+
+            cells.RemoveAll((x) => toDelete.Contains(x));
+
+            if (cells.Count == 0)
+            {
+                map = new Blocks[Width, Height];
+                cellMap = new Blocks[Width, Height];
+
+                cells.Add(new Cell(new Coord(Width / 2, Height / 2), OnCellCreate, OnCellKill));
+            }
+        }
+
+        public void GoTo(Coord current, Coord normal)
+        {
+            cellMap[current.X, current.Y] = Blocks.None;
+            cellMap[current.X + normal.X, current.Y + normal.Y] = Blocks.Cell;
         }
 
         public bool EatOrganics(Coord coord)
@@ -120,9 +146,9 @@ namespace Microwave.Core.Engine
 
         internal int GetEnergy(Coord curCoord)
         {
-            return (Height - curCoord.Y) / 2 / (Height / 8); // 0..4
+            return (Height - curCoord.Y) / (Height / 8); // 0..8
         }
-        internal int GetWater(Coord curCoord)
+        internal int GetMinerals(Coord curCoord)
         {
             return curCoord.Y / 2 / (Height / 8);
         }

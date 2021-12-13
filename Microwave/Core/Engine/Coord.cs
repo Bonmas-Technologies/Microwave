@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Microwave.Core.Engine
+﻿namespace Microwave.Core.Engine
 {
-    internal struct Coord
+    public struct Coord
     {
         public readonly int X;
         public readonly int Y;

@@ -67,7 +67,6 @@ namespace Microwave.Core.Engine
                         states.Add(genome.GetInt());
                     break;
                 case GenomeStates.mutate:
-                case GenomeStates.sendEnergy:
                 case GenomeStates.photosynthesis:
                     break;
             }
@@ -109,7 +108,6 @@ namespace Microwave.Core.Engine
         mutate,
         photosynthesis, 
         eatAnything,
-        sendEnergy,
         go
     }
 }

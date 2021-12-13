@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Microwave.Core.Engine
 {
-    internal class World
+    public class World
     {
         public int Width  { get; set; }
         
@@ -14,26 +14,88 @@ namespace Microwave.Core.Engine
 
 
         private Blocks[,] map;
+        private Blocks[,] cellMap;
 
         private List<Cell> cells;
 
         public World(int width, int height)
         {
-            Width  = width;
-            Height = height;
+            Width   = width;
+            Height  = height;
 
-            map = new Blocks[width, height];
+            map     = new Blocks[width, height];
+            cellMap = new Blocks[width, height];
 
-            cells = new List<Cell>(2 << 12);
-
-            cells.Add(new Cell(new Coord(width / 2, height / 2)));
+            cells   = new List<Cell>(2 << 12)
+            {
+                new Cell(new Coord(width / 2, height / 2), OnCellCreate, OnCellKill)
+            };
         }
 
         public void Step()
         {
+            Queue<Cell> updatableCells = (Queue<Cell>)new Queue<Cell>().Union(cells);
 
+            cellMap = new Blocks[Width, Height];
+            
+            foreach (Cell cell in cells)
+            {
+                var x = cell.curCoord.X;
+                var y = cell.curCoord.Y;
+
+                cellMap[x, y] = Blocks.Cell;
+            }
+
+            while (updatableCells.Count > 0)
+            {
+                var cell = updatableCells.Dequeue();
+
+                cell.Step(this);
+            }
+
+
+            foreach (Cell cell in cells)
+            {
+                var x = cell.curCoord.X;
+                var y = cell.curCoord.Y;
+
+                if (cellMap[x, y] == Blocks.None)
+                {
+                    cell.Step(this);
+                }
+            }
         }
 
+        public bool EatOrganics(Coord coord)
+        {
+            if (map[coord.X, coord.Y] == Blocks.Organics)
+                map[coord.X, coord.Y] = Blocks.None;
+            else
+                return false;
+
+            return true;
+        }
+
+        public void KillCell(Coord coord)
+        {
+            cellMap[coord.X, coord.Y] = Blocks.None;
+        }
+
+
+        private void OnCellCreate(Cell current)
+        {
+            cellMap[current.curCoord.X, current.curCoord.Y] = Blocks.Wall;
+
+            cells.Add(current);
+        }
+
+        private void OnCellKill(Cell current)
+        {
+            cellMap[current.curCoord.X, current.curCoord.Y] = Blocks.None;
+            map[current.curCoord.X, current.curCoord.Y] = Blocks.Organics;
+
+            cells.Remove(current);
+        }
 
 
 
@@ -48,7 +110,10 @@ namespace Microwave.Core.Engine
             }
             else
             {
-                return map[x, y];
+                if (cellMap[x, y] == Blocks.None)
+                    return map[x, y];
+                else
+                    return cellMap[x, y];
             }
 
         }
@@ -63,7 +128,7 @@ namespace Microwave.Core.Engine
         }
     }
 
-    internal enum Blocks
+    public enum Blocks
     {
         None,
         Wall,

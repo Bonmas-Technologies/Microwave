@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Microwave.Core.Engine
 {
@@ -14,35 +10,50 @@ namespace Microwave.Core.Engine
 
         public Coord curCoord;
 
+        public Action<Cell> CreateCell;
+        public Action<Cell> KillCell;
+        
         private int energy   = maxValue / 2;
         private int water    = maxValue;
         private int livetime = 0;
         
         private Genome genome;
 
-        public Cell(Coord coord)
+        public Cell(Coord coord, Action<Cell> createCell, Action<Cell> killCell)
         {
             curCoord = coord;
+
+            CreateCell = createCell;
+            KillCell   = killCell;
 
             genome = new Genome();
         }
 
-        public Cell(Coord coord, Cell other)
+        public Cell(Coord coord, Cell parent)
         {
             curCoord = coord;
 
-            genome = new Genome(other.genome.GetContainer());
+            CreateCell = parent.CreateCell;
+            KillCell = parent.KillCell;
+
+            genome = new Genome(parent.genome.GetContainer());
         }
 
         public void Step(World world)
         {
+            if (world.GetBlock(curCoord) != Blocks.Cell)
+            {
+                KillCell?.Invoke(this);
+                return;
+            }
+
             var container = genome.ReturnCommand();
 
             int energyIncome = world.GetEnergy(curCoord);
             int waterIncome = world.GetWater(curCoord);
 
             var offset = ArgumentToCoord(container.argument);
-            
+
             var block = world.GetBlock(curCoord + offset);
 
 
@@ -80,9 +91,16 @@ namespace Microwave.Core.Engine
                     break;
 
                 case GenomeStates.eatAnything:
-
-                    
+                    if (block == Blocks.Organics)
+                    {
+                        world.EatOrganics(curCoord + offset);
+                    }
+                    else if (block == Blocks.Cell)
+                    {
+                        world.KillCell(curCoord + offset);
+                    }
                     break;
+
                 case GenomeStates.go:
                     if (block == Blocks.None)
                     {
@@ -101,14 +119,12 @@ namespace Microwave.Core.Engine
                 case GenomeStates.mutate:
                     genome.Mutate();
                     break;
-                case GenomeStates.sendEnergy:
-                    break;
             }
 
             if (energy >= maxValue)
             {
                 bool canBeCreated = false;
-                
+
                 for (int i = 0; i < 8; i++)
                 {
                     var coord = ArgumentToCoord(i);
@@ -119,16 +135,22 @@ namespace Microwave.Core.Engine
                     {
                         energy = maxValue / 2;
 
-                        // TODO: Create new Cell
+                        CreateCell?.Invoke(new Cell(coord, this));
+
                         break;
                     }
                 }
 
                 if (!canBeCreated)
                 {
-
+                    KillCell?.Invoke(this);
                 }
 
+            }
+
+            if (energy <= 0 || water <= 0)
+            {
+                KillCell?.Invoke(this);
             }
 
 
@@ -137,7 +159,6 @@ namespace Microwave.Core.Engine
 
             water += waterIncome - 1;
         }
-
 
         private Coord ArgumentToCoord(int arg)
         {
